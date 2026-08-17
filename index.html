@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Counter / Contador de Saltos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Tagi zmieniające stronę w aplikację mobilną (PWA) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#43A1D5">
+    
+    <title>Jump Counter</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -54,14 +61,12 @@
         </div>
     </div>
 
-    <!-- Modal (Okno z Instrukcją) -->
+    <!-- Modal (Instrukcja) -->
     <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeHelp(event)">X</button>
             <h2 id="helpTitle">How to use / Instructions</h2>
-            <div id="helpContent" class="help-text">
-                <!-- Treść ładuje się z JavaScriptu -->
-            </div>
+            <div id="helpContent" class="help-text"></div>
         </div>
     </div>
 

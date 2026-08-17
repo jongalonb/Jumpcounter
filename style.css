@@ -6,6 +6,11 @@
     --text-dark: #1a252f;
 }
 
+/* Zabezpieczenie przed rozjeżdżaniem się szerokości */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 body {
     font-family: system-ui, sans-serif;
     padding: 10px 20px;
@@ -73,44 +78,16 @@ button:active { transform: scale(0.95); }
 /* Kolory Limitów */
 .tile.status-green { border-bottom: 5px solid #2ecc71; }
 .tile.status-green .count { color: #2ecc71; }
-
 .tile.status-yellow { border-bottom: 5px solid #f1c40f; }
 .tile.status-yellow .count { color: #f1c40f; }
-
 .tile.status-red { border-bottom: 5px solid #e74c3c; background-color: #fff5f5; }
 .tile.status-red .count { color: #e74c3c; }
 .tile.status-red .undo-btn { background-color: #c0392b; }
 
 /* Przyciski na kafelku */
-.undo-btn {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    background-color: #e74c3c;
-    color: white;
-    font-weight: bold;
-    font-size: 1.1em;
-    padding: 2px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    z-index: 10;
-}
+.undo-btn { position: absolute; top: 5px; left: 5px; background-color: #e74c3c; color: white; font-weight: bold; font-size: 1.1em; padding: 2px 10px; border-radius: 6px; cursor: pointer; z-index: 10; }
 .undo-btn:hover { background-color: #c0392b; }
-
-.key-hint {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: var(--arg-sun);
-    color: var(--text-dark);
-    font-size: 0.8em;
-    font-weight: bold;
-    padding: 5px 10px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    cursor: pointer;
-    border: 2px solid transparent;
-}
+.key-hint { position: absolute; top: 5px; right: 5px; background-color: var(--arg-sun); color: var(--text-dark); font-size: 0.8em; font-weight: bold; padding: 5px 10px; border-radius: 6px; text-transform: uppercase; cursor: pointer; border: 2px solid transparent; }
 .key-hint:hover { background-color: #dfa006; }
 .key-hint.listening { background-color: #e74c3c; color: white; animation: pulse 1s infinite; }
 
@@ -134,35 +111,84 @@ th { background-color: var(--bg-color); color: var(--text-dark); }
 .limit-item { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.85em; font-weight: bold; color: var(--text-dark); }
 .limit-item input { width: 50px; padding: 5px; font-size: 14px; text-align: center; border-radius: 5px; border: 1px solid #ccc; }
 
-/* MODAL (Instrukcja) */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-.modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    position: relative;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-.close-modal {
-    position: absolute;
-    top: 15px; right: 15px;
-    background: #e74c3c;
-    color: white;
-    padding: 5px 12px;
-    font-size: 16px;
-    border-radius: 5px;
-}
-.close-modal:hover { background: #c0392b; }
+/* MODAL */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+.close-modal { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 5px 12px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
 .help-text h3 { color: var(--arg-blue); margin-bottom: 5px; margin-top: 20px; }
 .help-text p { margin: 0 0 10px 0; color: #333; line-height: 1.4; }
-.help-text ul { margin-top: 0; padding-left: 20px; color: #333; }
+
+/* ========================================================= */
+/*       MEDIA QUERIES (RESPONSYWNOŚĆ DLA SMARTFONÓW)        */
+/* ========================================================= */
+
+@media (max-width: 900px) {
+    .app-layout {
+        flex-direction: column; /* Panele układają się jeden pod drugim */
+    }
+    
+    .main-panel, .side-panel {
+        min-width: 100%; 
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    #grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 kafelki w rzędzie na większych telefonach */
+    }
+    
+    .top-bar {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .profile-section, .lang-switcher {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .header input, .header select, .header button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    /* Na telefonie stoper może zajmować dwie linie dla czytelności */
+    .timer-panel {
+        font-size: 1.2em;
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 5px 10px; /* Mniejsze marginesy krawędziowe dla małych ekranów */
+    }
+    
+    #grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 kafelki w rzędzie na bardzo wąskich ekranach */
+    }
+    
+    .tile {
+        padding: 20px 5px 10px 5px; /* Minimalizujemy puste miejsce na kafelku */
+    }
+    
+    .count {
+        font-size: 2em; /* Lekko mniejsza czcionka licznika by zawsze się mieściła */
+    }
+    
+    .name {
+        font-size: 0.9em;
+    }
+    
+    /* Powiększamy przyciski z - i + dla łatwiejszego trafienia palcem */
+    .undo-btn, .key-hint {
+        padding: 6px 12px;
+        font-size: 1.1em;
+    }
+}
