@@ -12,7 +12,7 @@ const dict = {
         pos_S: "Setter (S)", pos_OH: "Outside Hitter (OH)", pos_MB: "Middle Blocker (MB)", pos_OPP: "Opposite (OPP)", pos_L: "Libero (L)",
         helpHTML: `
             <h3>1. Add & Bind Keys</h3>
-            <p>Select a position, type a name and click <b>Add</b>. To change a hotkey, click the orange button <code>[ + ]</code> on the tile. When it pulses red, press any key on your keyboard.</p>
+            <p>Select a position, type a name and click <b>Add</b>. To change a hotkey, click the top-right button on the tile. When it pulses red, press any key on your keyboard.</p>
             <h3>2. Count Jumps</h3>
             <p>Click anywhere on the tile OR press the assigned keyboard key.</p>
             <h3>3. Undo & Delete</h3>
@@ -35,7 +35,7 @@ const dict = {
         pos_S: "Armador (S)", pos_OH: "Punta (OH)", pos_MB: "Central (MB)", pos_OPP: "Opuesto (OPP)", pos_L: "Líbero (L)",
         helpHTML: `
             <h3>1. Añadir y Asignar Teclas</h3>
-            <p>Elige posición, escribe el nombre y clic en <b>Añadir</b>. Para cambiar la tecla, haz clic en el botón naranja <code>[ + ]</code>.</p>
+            <p>Elige posición, escribe el nombre y clic en <b>Añadir</b>. Para cambiar la tecla, haz clic en el botón arriba a la derecha en la tarjeta.</p>
             <h3>2. Contar Saltos</h3>
             <p>Haz clic en la tarjeta O presiona la tecla asignada.</p>
             <h3>3. Deshacer y Eliminar</h3>
@@ -56,11 +56,10 @@ let activeProfile = null;
 
 let listeningForBindIndex = null; 
 let isBackspacePressed = false;
-let isDeleteMode = false; // Nowy stan dla trybu usuwania
+let isDeleteMode = false;
 let stageTimerInterval = null;
 let stageStartTime = null;
 
-// ================= BAZA DANYCH I PROFILE =================
 function initData() {
     const stored = localStorage.getItem('volleyJumpsData');
     if (stored) appData = JSON.parse(stored);
@@ -86,8 +85,7 @@ function updateProfileSelect() {
     sel.innerHTML = '';
     Object.keys(appData.profiles).forEach(id => {
         const opt = document.createElement('option');
-        opt.value = id;
-        opt.innerText = appData.profiles[id].name;
+        opt.value = id; opt.innerText = appData.profiles[id].name;
         if (id === appData.activeProfileId) opt.selected = true;
         sel.appendChild(opt);
     });
@@ -133,7 +131,6 @@ function loadActiveProfile() {
     updateTimerDisplay(); renderPositionSelect(); renderLimits(); renderGrid(); renderTable();
 }
 
-// ================= JĘZYK I UI =================
 function setLanguage(lang) {
     currentLang = lang;
     const t = dict[lang];
@@ -172,7 +169,6 @@ function renderPositionSelect() {
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
 function closeHelp(event) { if(event) event.stopPropagation(); document.getElementById('helpModal').style.display = 'none'; }
 
-// ================= TIMER =================
 function startTimer() {
     if (stageTimerInterval) return;
     stageStartTime = Date.now() - (activeProfile.time * 1000);
@@ -193,7 +189,6 @@ function updateTimerDisplay() {
     document.getElementById('timeTotal').innerText = formatTime((activeProfile?.totalTimeBase || 0) + (activeProfile?.time || 0));
 }
 
-// ================= KLAWIATURA I AKCJE =================
 document.addEventListener('keydown', (event) => {
     if (event.target.tagName.toLowerCase() === 'input' || isDeleteMode) return;
     
@@ -250,7 +245,6 @@ function decrementJump(event, index) {
     }
 }
 
-// ================= TRYB USUWANIA (NOWOŚĆ) =================
 function toggleDeleteMode() {
     isDeleteMode = !isDeleteMode;
     updateDeleteModeUI();
@@ -275,11 +269,11 @@ function executeDeletePlayer(index) {
     if (confirm(`${dict[currentLang].confirmDeletePlayer}\n(${pName})`)) {
         activeProfile.players.splice(index, 1);
         saveData();
-        toggleDeleteMode(); // Wyłączamy tryb usuwania po udanej akcji
+        toggleDeleteMode(); 
         renderGrid(); 
         renderTable();
     } else {
-        toggleDeleteMode(); // Anulowano, więc wyłączamy tryb
+        toggleDeleteMode(); 
     }
 }
 
@@ -289,7 +283,6 @@ function startListening(event, index) {
     renderGrid();
 }
 
-// ================= ZARZĄDZANIE ETAPEM I LIMITAMI =================
 function nextStage() {
     if (!activeProfile || activeProfile.players.length === 0) return;
     
@@ -323,7 +316,6 @@ function updateLimit(pos, value) {
     saveData(); renderGrid();
 }
 
-// ================= RENDEROWANIE WIDOKÓW (Z NOWYMI KOLORAMI) =================
 function renderGrid() {
     const grid = document.getElementById('grid');
     grid.innerHTML = ''; 
@@ -331,20 +323,18 @@ function renderGrid() {
     activeProfile.players.forEach((player, index) => {
         const tile = document.createElement('div');
         
-        // Płynna paleta kolorów HSL: od 120 (Zielony) -> 60 (Żółty) -> 0 (Czerwony)
         const limit = activeProfile.limits[player.position] || 100;
         const totalPastStages = player.stages.reduce((sum, val) => sum + val, 0);
         const totalJumps = totalPastStages + player.currentJumps;
         
         let pct = totalJumps / limit;
-        if (pct > 1) pct = 1; // Zatrzymujemy obliczenia na 100%, by kolor nie poszedł w fiolet/róż
+        if (pct > 1) pct = 1; 
         
-        // Obliczanie odcienia: 0 skoków to zielony (120), 100% to czerwony (0)
+        // Zmodyfikowana paleta z jasnością 60% – tło jest wyraźne, ale czarny tekst mocno od niego odstaje!
         const hue = Math.floor(120 * (1 - pct));
-        const tileColor = `hsl(${hue}, 85%, 42%)`; // 42% jasności daje mocny, nasycony i czytelny kolor
+        const tileColor = `hsl(${hue}, 85%, 60%)`; 
 
         tile.className = 'tile';
-        // Przekazanie dynamicznego koloru do CSS (zmienia pasek na dole i licznik)
         tile.style.setProperty('--tile-color', tileColor);
         
         tile.onclick = () => {
