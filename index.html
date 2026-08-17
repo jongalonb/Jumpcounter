@@ -3,71 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#43A1D5">
     
-    <title>Jump Counter</title>
+    <title>Jump Counter Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="top-bar">
-        <div class="profile-section">
-            <span id="profileWord">Profile:</span>
-            <select id="profileSelect" onchange="changeProfile()"></select>
-            <button onclick="createProfile()" id="newProfileBtn" class="sm-btn">+ New</button>
-            <button onclick="deleteProfile()" id="deleteProfileBtn" class="sm-btn delete-btn">X</button>
+    <!-- GŁÓWNY PASEK NAWIGACJI -->
+    <nav class="app-nav">
+        <button onclick="openModal('menuModal')" class="icon-btn">☰ <span id="navMenuBtn">Menu</span></button>
+        <div class="timer-display">
+            <span id="timeStage">00:00</span>
+            <small id="timeTotal">(00:00)</small>
         </div>
-        <div class="lang-switcher">
-            <button onclick="openHelp()" class="help-btn" id="helpBtnBtn">?</button>
-            <button onclick="setLanguage('en')" class="lang-btn" id="btn-en">EN</button>
-            <button onclick="setLanguage('es')" class="lang-btn" id="btn-es">ES</button>
-        </div>
-    </div>
+        <button onclick="openModal('addPlayerModal')" class="icon-btn btn-blue">➕ <span id="navAddBtn">Add</span></button>
+    </nav>
 
-    <div class="header">
-        <input type="text" id="playerName" autocomplete="off" onkeypress="handleEnter(event)">
-        <select id="playerPosition" class="pos-select"></select>
-        <button onclick="addPlayer()" class="add-btn" id="addBtn">Add</button>
-        <button onclick="toggleDeleteMode()" class="del-player-btn" id="delPlayerBtn">Remove Player</button>
-        
-        <button onclick="nextStage()" class="stage-btn" id="stageBtn">
+    <!-- GŁÓWNE AKCJE BOISKOWE -->
+    <div class="action-bar">
+        <button onclick="nextStage()" class="btn-primary" id="stageBtn">
             <span id="stageBtnText">Finish stage</span> <span id="stageBtnLabel">1</span>
         </button>
-        <button onclick="exportToCSV()" class="export-btn" id="exportBtn">Export to Excel</button>
+        <button onclick="toggleDeleteMode()" class="btn-danger" id="delPlayerBtn">Remove Player</button>
     </div>
     
-    <div class="timer-panel" id="timerDisplay">
-        <span id="stageTimeLabel">Stage Time:</span> <span id="timeStage">00:00</span> | 
-        <span id="totalTimeLabel">Total Time:</span> <span id="timeTotal">00:00</span>
-    </div>
-    
-    <div class="app-layout">
-        <div class="main-panel">
-            <div id="grid"></div>
-        </div>
+    <!-- BOISKO (KAFELKI) -->
+    <div id="grid"></div>
 
-        <div class="side-panel">
-            <h2><span id="summaryTitle">Summary</span> (<span id="stageWord">Stage</span> <span id="stageLabel">1</span>)</h2>
+    <!-- TABELA PODSUMOWUJĄCA (Zwijana) -->
+    <div class="summary-section">
+        <details>
+            <summary><span id="summaryTitle">📊 Summary</span> (<span id="stageWord">Stage</span> <span id="stageLabel">1</span>)</summary>
             <div class="table-container">
                 <table id="summaryTable"></table>
             </div>
-            
-            <div class="limits-panel">
-                <details>
-                    <summary id="limitsTitle">⚙️ Jump Limits by Position</summary>
-                    <div id="limitsContainer" class="limits-flex"></div>
-                </details>
+        </details>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- OKNA WYSKAKUJĄCE (MODALS)                 -->
+    <!-- ========================================== -->
+
+    <!-- 1. OKNO DODAWANIA ZAWODNIKA -->
+    <div id="addPlayerModal" class="modal" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 id="modalAddTitle">Add Player</h2>
+            <input type="text" id="playerName" autocomplete="off" onkeypress="handleEnter(event)">
+            <select id="playerPosition" class="pos-select"></select>
+            <div class="modal-actions">
+                <button onclick="closeModals()" class="btn-secondary" id="cancelAddBtn">Cancel</button>
+                <button onclick="addPlayer()" class="btn-primary" id="confirmAddBtn">Add</button>
             </div>
         </div>
     </div>
 
-    <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
+    <!-- 2. OKNO MENU (Ustawienia, Reset, Eksport) -->
+    <div id="menuModal" class="modal" onclick="closeModals(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-modal" onclick="closeHelp(event)">X</button>
-            <h2 id="helpTitle">How to use / Instructions</h2>
+            <button class="close-btn" onclick="closeModals()">X</button>
+            <h2>⚙️ Menu</h2>
+            
+            <div class="menu-group">
+                <label id="profileWord">Profile:</label>
+                <select id="profileSelect" onchange="changeProfile()"></select>
+                <div class="profile-actions">
+                    <button onclick="createProfile()" id="newProfileBtn" class="btn-blue">+ New</button>
+                    <button onclick="deleteProfile()" class="btn-danger">X</button>
+                </div>
+            </div>
+
+            <div class="menu-group">
+                <button onclick="startNewTraining()" class="btn-warning" id="newTrainingBtn">🔄 New Training (Reset)</button>
+            </div>
+
+            <div class="menu-group">
+                <button onclick="exportToCSV()" class="btn-success" id="exportBtn">📥 Export to Excel</button>
+            </div>
+
+            <div class="menu-group">
+                <details class="limits-details">
+                    <summary id="limitsTitle">📊 Jump Limits</summary>
+                    <div id="limitsContainer" class="limits-flex"></div>
+                </details>
+            </div>
+
+            <div class="menu-group lang-switcher">
+                <button onclick="setLanguage('en')" class="lang-btn" id="btn-en">EN</button>
+                <button onclick="setLanguage('es')" class="lang-btn" id="btn-es">ES</button>
+                <button onclick="openModal('helpModal')" class="help-btn">❓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. OKNO POMOCY -->
+    <div id="helpModal" class="modal" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModals()">X</button>
+            <h2 id="helpTitle">Instructions</h2>
             <div id="helpContent" class="help-text"></div>
         </div>
     </div>
