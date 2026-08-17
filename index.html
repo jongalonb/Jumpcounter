@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jump Counter / Contador de Saltos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="top-bar">
+        <div class="profile-section">
+            <span id="profileWord">Profile:</span>
+            <select id="profileSelect" onchange="changeProfile()"></select>
+            <button onclick="createProfile()" id="newProfileBtn" class="sm-btn">+ New</button>
+            <button onclick="deleteProfile()" id="deleteProfileBtn" class="sm-btn delete-btn">X</button>
+        </div>
+        <div class="lang-switcher">
+            <button onclick="openHelp()" class="help-btn" id="helpBtnBtn">?</button>
+            <button onclick="setLanguage('en')" class="lang-btn" id="btn-en">EN</button>
+            <button onclick="setLanguage('es')" class="lang-btn" id="btn-es">ES</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <input type="text" id="playerName" autocomplete="off" onkeypress="handleEnter(event)">
+        <select id="playerPosition" class="pos-select"></select>
+        <button onclick="addPlayer()" class="add-btn" id="addBtn">Add</button>
+        <button onclick="nextStage()" class="stage-btn" id="stageBtn">
+            <span id="stageBtnText">Finish stage</span> <span id="stageBtnLabel">1</span>
+        </button>
+        <button onclick="exportToCSV()" class="export-btn" id="exportBtn">Export to Excel</button>
+    </div>
+    
+    <div class="timer-panel" id="timerDisplay">
+        <span id="stageTimeLabel">Stage Time:</span> <span id="timeStage">00:00</span> | 
+        <span id="totalTimeLabel">Total Time:</span> <span id="timeTotal">00:00</span>
+    </div>
+    
+    <div class="app-layout">
+        <div class="main-panel">
+            <div id="grid"></div>
+        </div>
+
+        <div class="side-panel">
+            <h2><span id="summaryTitle">Summary</span> (<span id="stageWord">Stage</span> <span id="stageLabel">1</span>)</h2>
+            <div class="table-container">
+                <table id="summaryTable"></table>
+            </div>
+            
+            <div class="limits-panel">
+                <h3 id="limitsTitle">Jump Limits by Position</h3>
+                <div id="limitsContainer" class="limits-flex"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal (Okno z Instrukcją) -->
+    <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-modal" onclick="closeHelp(event)">X</button>
+            <h2 id="helpTitle">How to use / Instructions</h2>
+            <div id="helpContent" class="help-text">
+                <!-- Treść ładuje się z JavaScriptu -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
