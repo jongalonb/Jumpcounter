@@ -3,7 +3,7 @@ const dict = {
         placeholder: "Name, surname or nickname", add: "Add", finishStage: "Finish stage", export: "Export to Excel", 
         summary: "Summary", stageWord: "Stage", tableName: "Name", tableCurrent: "Current", tableTotal: "Total", 
         alertNoData: "No data to export!", profileWord: "Profile:", newProfileBtn: "+ New",
-        promptNewProfile: "Enter profile name:", limitsTitle: "Jump Limits by Position",
+        promptNewProfile: "Enter profile name:", limitsTitle: "⚙️ Jump Limits by Position",
         stageTimeLabel: "Stage Time:", totalTimeLabel: "Total Time:", helpTitle: "Instructions",
         deletePlayerBtn: "Remove Player", cancelDelete: "Cancel",
         confirmDeletePlayer: "Are you sure you want to completely remove this player?",
@@ -26,7 +26,7 @@ const dict = {
         placeholder: "Nombre, apellido o apodo", add: "Añadir", finishStage: "Terminar etapa", export: "Exportar a Excel", 
         summary: "Resumen", stageWord: "Etapa", tableName: "Nombre", tableCurrent: "Actual", tableTotal: "Total", 
         alertNoData: "¡No hay datos para exportar!", profileWord: "Perfil:", newProfileBtn: "+ Nuevo",
-        promptNewProfile: "Ingrese el nombre del perfil:", limitsTitle: "Límites de saltos",
+        promptNewProfile: "Ingrese el nombre del perfil:", limitsTitle: "⚙️ Límites de saltos por posición",
         stageTimeLabel: "Tiempo Etapa:", totalTimeLabel: "Tiempo Total:", helpTitle: "Instrucciones",
         deletePlayerBtn: "Eliminar Jugador", cancelDelete: "Cancelar",
         confirmDeletePlayer: "¿Estás seguro de que quieres eliminar a este jugador?",
@@ -330,12 +330,18 @@ function renderGrid() {
         let pct = totalJumps / limit;
         if (pct > 1) pct = 1; 
         
-        // Zmodyfikowana paleta z jasnością 60% – tło jest wyraźne, ale czarny tekst mocno od niego odstaje!
+        // hue: 120 (Zielony) -> 0 (Czerwony)
         const hue = Math.floor(120 * (1 - pct));
-        const tileColor = `hsl(${hue}, 85%, 60%)`; 
+        
+        // Główny kolor do obramowania i tekstu licznika (ciemniejszy)
+        const tileColor = `hsl(${hue}, 85%, 45%)`; 
+        
+        // Bardzo jasny, wyblakły kolor do delikatnego tła
+        const tileBgColor = `hsl(${hue}, 85%, 96%)`; 
 
         tile.className = 'tile';
         tile.style.setProperty('--tile-color', tileColor);
+        tile.style.setProperty('--tile-bg-color', tileBgColor);
         
         tile.onclick = () => {
             if (isDeleteMode) executeDeletePlayer(index);
@@ -378,22 +384,27 @@ function renderTable() {
     html += '</tbody>'; table.innerHTML = html;
 }
 
+// "KULOODPORNY" EKSPORT DO EXCELA
 function exportToCSV() {
     if (!activeProfile || activeProfile.players.length === 0) { alert(dict[currentLang].alertNoData); return; }
 
     const t = dict[currentLang];
-    let csvContent = `data:text/csv;charset=utf-8,\uFEFF${t.tableName},Position,`;
     
-    for (let i = 0; i < activeProfile.stageIndex; i++) csvContent += `${t.stageWord} ${i + 1},`;
-    csvContent += `${t.stageWord} ${activeProfile.stageIndex + 1} (${t.tableCurrent}),${t.tableTotal}\n`;
+    // Znak \uFEFF to informacja o kodowaniu UTF-8 (polskie/hiszpańskie znaki).
+    // Linia 'sep=;' informuje każdego Excela na świecie, że separatorem jest średnik.
+    let csvContent = `data:text/csv;charset=utf-8,\uFEFFsep=;\n${t.tableName};Position;`;
+    
+    // Używamy ZAWSZE średnika (;) do oddzielania kolumn
+    for (let i = 0; i < activeProfile.stageIndex; i++) csvContent += `${t.stageWord} ${i + 1};`;
+    csvContent += `${t.stageWord} ${activeProfile.stageIndex + 1} (${t.tableCurrent});${t.tableTotal}\n`;
     
     activeProfile.players.forEach(p => {
         const totalPastStages = p.stages.reduce((sum, val) => sum + val, 0);
         const grandTotal = totalPastStages + p.currentJumps;
         
-        csvContent += `${p.name},${p.position},`;
-        p.stages.forEach(s => { csvContent += `${s},`; });
-        csvContent += `${p.currentJumps},${grandTotal}\n`;
+        csvContent += `${p.name};${p.position};`;
+        p.stages.forEach(s => { csvContent += `${s};`; });
+        csvContent += `${p.currentJumps};${grandTotal}\n`;
     });
     
     const encodedUri = encodeURI(csvContent);
