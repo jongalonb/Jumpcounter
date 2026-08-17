@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- Tagi zmieniające stronę w aplikację mobilną (PWA) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,6 +31,8 @@
         <input type="text" id="playerName" autocomplete="off" onkeypress="handleEnter(event)">
         <select id="playerPosition" class="pos-select"></select>
         <button onclick="addPlayer()" class="add-btn" id="addBtn">Add</button>
+        <button onclick="toggleDeleteMode()" class="del-player-btn" id="delPlayerBtn">Remove Player</button>
+        
         <button onclick="nextStage()" class="stage-btn" id="stageBtn">
             <span id="stageBtnText">Finish stage</span> <span id="stageBtnLabel">1</span>
         </button>
@@ -61,7 +62,6 @@
         </div>
     </div>
 
-    <!-- Modal (Instrukcja) -->
     <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeHelp(event)">X</button>

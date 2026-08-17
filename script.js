@@ -5,19 +5,21 @@ const dict = {
         alertNoData: "No data to export!", profileWord: "Profile:", newProfileBtn: "+ New",
         promptNewProfile: "Enter profile name:", limitsTitle: "Jump Limits by Position",
         stageTimeLabel: "Stage Time:", totalTimeLabel: "Total Time:", helpTitle: "Instructions",
+        deletePlayerBtn: "Remove Player", cancelDelete: "Cancel",
+        confirmDeletePlayer: "Are you sure you want to completely remove this player?",
+        confirmDeleteProfile: "Are you sure you want to delete this profile?",
+        cantDeleteLast: "You cannot delete the last profile. Create a new one first.",
         pos_S: "Setter (S)", pos_OH: "Outside Hitter (OH)", pos_MB: "Middle Blocker (MB)", pos_OPP: "Opposite (OPP)", pos_L: "Libero (L)",
         helpHTML: `
             <h3>1. Add & Bind Keys</h3>
-            <p>Select a position, type a name and click <b>Add</b>. To change a hotkey, click the orange button <code>[ + ]</code> or <code>[ key ]</code> on the tile. When it pulses red, press any key on your keyboard.</p>
+            <p>Select a position, type a name and click <b>Add</b>. To change a hotkey, click the orange button <code>[ + ]</code> on the tile. When it pulses red, press any key on your keyboard.</p>
             <h3>2. Count Jumps</h3>
-            <p>Click anywhere on the tile OR press the assigned keyboard key to add a jump. The timer will start automatically.</p>
-            <h3>3. Undo (Mistake correction)</h3>
-            <p>Click the red <code>[ - ]</code> button on the top-left of the tile, OR hold <code>Backspace</code> and press the player's key.</p>
+            <p>Click anywhere on the tile OR press the assigned keyboard key.</p>
+            <h3>3. Undo & Delete</h3>
+            <p><b>Undo a jump:</b> Click the red <code>[ - ]</code> button on the top-left.<br>
+            <b>Delete a player:</b> Click "Remove Player" at the top, then click the player's tile.</p>
             <h3>4. Finish Stage</h3>
-            <p>Clicking <b>Finish Stage</b> saves the current count to the table, resets all tiles to 0, and starts the next stage.</p>
-            <h3>5. Visual Limits</h3>
-            <p>Set jump limits per position below the table. Tiles change color automatically: <br>
-            <b style="color:#2ecc71">Green (0-50%)</b> | <b style="color:#f1c40f">Yellow (50-100%)</b> | <b style="color:#e74c3c">Red (Over 100%)</b></p>
+            <p>Clicking <b>Finish Stage</b> saves the current count to the table and resets the tiles.</p>
         `
     },
     es: {
@@ -26,19 +28,21 @@ const dict = {
         alertNoData: "¡No hay datos para exportar!", profileWord: "Perfil:", newProfileBtn: "+ Nuevo",
         promptNewProfile: "Ingrese el nombre del perfil:", limitsTitle: "Límites de saltos",
         stageTimeLabel: "Tiempo Etapa:", totalTimeLabel: "Tiempo Total:", helpTitle: "Instrucciones",
+        deletePlayerBtn: "Eliminar Jugador", cancelDelete: "Cancelar",
+        confirmDeletePlayer: "¿Estás seguro de que quieres eliminar a este jugador?",
+        confirmDeleteProfile: "¿Estás seguro de que quieres eliminar este perfil?",
+        cantDeleteLast: "No puedes eliminar el último perfil. Crea uno nuevo primero.",
         pos_S: "Armador (S)", pos_OH: "Punta (OH)", pos_MB: "Central (MB)", pos_OPP: "Opuesto (OPP)", pos_L: "Líbero (L)",
         helpHTML: `
             <h3>1. Añadir y Asignar Teclas</h3>
-            <p>Elige posición, escribe el nombre y clic en <b>Añadir</b>. Para cambiar la tecla, haz clic en el botón naranja <code>[ + ]</code> de la tarjeta. Cuando parpadee en rojo, presiona cualquier tecla.</p>
+            <p>Elige posición, escribe el nombre y clic en <b>Añadir</b>. Para cambiar la tecla, haz clic en el botón naranja <code>[ + ]</code>.</p>
             <h3>2. Contar Saltos</h3>
-            <p>Haz clic en la tarjeta O presiona la tecla asignada. El temporizador iniciará automáticamente.</p>
-            <h3>3. Deshacer (Corregir error)</h3>
-            <p>Haz clic en el botón rojo <code>[ - ]</code> de la tarjeta, O mantén presionado <code>Backspace</code> y presiona la tecla del jugador.</p>
+            <p>Haz clic en la tarjeta O presiona la tecla asignada.</p>
+            <h3>3. Deshacer y Eliminar</h3>
+            <p><b>Deshacer salto:</b> Haz clic en el botón rojo <code>[ - ]</code>.<br>
+            <b>Eliminar jugador:</b> Haz clic en "Eliminar Jugador" arriba, luego haz clic en la tarjeta.</p>
             <h3>4. Terminar Etapa</h3>
-            <p>Guarda el conteo actual en la tabla, reinicia las tarjetas a 0 y comienza la siguiente etapa.</p>
-            <h3>5. Límites Visuales</h3>
-            <p>Ajusta los límites por posición debajo de la tabla. Las tarjetas cambian de color: <br>
-            <b style="color:#2ecc71">Verde (0-50%)</b> | <b style="color:#f1c40f">Amarillo (50-100%)</b> | <b style="color:#e74c3c">Rojo (Más de 100%)</b></p>
+            <p>Guarda el conteo actual en la tabla y reinicia las tarjetas a 0.</p>
         `
     }
 };
@@ -52,6 +56,7 @@ let activeProfile = null;
 
 let listeningForBindIndex = null; 
 let isBackspacePressed = false;
+let isDeleteMode = false; // Nowy stan dla trybu usuwania
 let stageTimerInterval = null;
 let stageStartTime = null;
 
@@ -71,16 +76,10 @@ function initData() {
 }
 
 function createEmptyProfile(name) {
-    return { 
-        name: name, players: [], stageIndex: 0, 
-        time: 0, totalTimeBase: 0, 
-        limits: { S: 60, OH: 100, MB: 80, OPP: 100, L: 20 } 
-    };
+    return { name: name, players: [], stageIndex: 0, time: 0, totalTimeBase: 0, limits: { S: 60, OH: 100, MB: 80, OPP: 100, L: 20 } };
 }
 
-function saveData() {
-    localStorage.setItem('volleyJumpsData', JSON.stringify(appData));
-}
+function saveData() { localStorage.setItem('volleyJumpsData', JSON.stringify(appData)); }
 
 function updateProfileSelect() {
     const sel = document.getElementById('profileSelect');
@@ -96,8 +95,7 @@ function updateProfileSelect() {
 
 function changeProfile() {
     appData.activeProfileId = document.getElementById('profileSelect').value;
-    saveData();
-    loadActiveProfile();
+    saveData(); loadActiveProfile();
 }
 
 function createProfile() {
@@ -106,41 +104,33 @@ function createProfile() {
         const newId = 'prof_' + Date.now();
         appData.profiles[newId] = createEmptyProfile(name);
         appData.activeProfileId = newId;
-        saveData();
-        updateProfileSelect();
-        loadActiveProfile();
+        saveData(); updateProfileSelect(); loadActiveProfile();
     }
 }
 
 function deleteProfile() {
     if (Object.keys(appData.profiles).length > 1) {
-        if (confirm("Delete this profile?")) {
+        if (confirm(dict[currentLang].confirmDeleteProfile)) {
             delete appData.profiles[appData.activeProfileId];
             appData.activeProfileId = Object.keys(appData.profiles)[0];
-            saveData();
-            updateProfileSelect();
-            loadActiveProfile();
+            saveData(); updateProfileSelect(); loadActiveProfile();
         }
-    } else {
-        alert("Cannot delete the last profile.");
-    }
+    } else alert(dict[currentLang].cantDeleteLast);
 }
 
 function loadActiveProfile() {
     activeProfile = appData.profiles[appData.activeProfileId];
-    if(activeProfile.totalTimeBase === undefined) activeProfile.totalTimeBase = 0; // Kompatybilność wstecz
-    
+    if(activeProfile.totalTimeBase === undefined) activeProfile.totalTimeBase = 0;
     if(stageTimerInterval) clearInterval(stageTimerInterval);
     stageTimerInterval = null;
     
     document.getElementById('stageLabel').innerText = activeProfile.stageIndex + 1;
     document.getElementById('stageBtnLabel').innerText = activeProfile.stageIndex + 1;
     
-    updateTimerDisplay();
-    renderPositionSelect();
-    renderLimits();
-    renderGrid();
-    renderTable();
+    isDeleteMode = false;
+    updateDeleteModeUI();
+    
+    updateTimerDisplay(); renderPositionSelect(); renderLimits(); renderGrid(); renderTable();
 }
 
 // ================= JĘZYK I UI =================
@@ -161,13 +151,12 @@ function setLanguage(lang) {
     document.getElementById('helpTitle').innerText = t.helpTitle;
     document.getElementById('helpContent').innerHTML = t.helpHTML;
     
+    updateDeleteModeUI();
+    
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     document.getElementById('btn-es').classList.toggle('active', lang === 'es');
     
-    updateTimerDisplay();
-    renderPositionSelect();
-    renderLimits();
-    renderTable(); 
+    updateTimerDisplay(); renderPositionSelect(); renderLimits(); renderTable(); 
 }
 
 function renderPositionSelect() {
@@ -175,20 +164,13 @@ function renderPositionSelect() {
     sel.innerHTML = '';
     positionsList.forEach(pos => {
         const opt = document.createElement('option');
-        opt.value = pos;
-        opt.innerText = dict[currentLang]['pos_' + pos];
+        opt.value = pos; opt.innerText = dict[currentLang]['pos_' + pos];
         sel.appendChild(opt);
     });
 }
 
-// ================= MODAL POMOCY =================
-function openHelp() {
-    document.getElementById('helpModal').style.display = 'flex';
-}
-function closeHelp(event) {
-    if(event) event.stopPropagation();
-    document.getElementById('helpModal').style.display = 'none';
-}
+function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
+function closeHelp(event) { if(event) event.stopPropagation(); document.getElementById('helpModal').style.display = 'none'; }
 
 // ================= TIMER =================
 function startTimer() {
@@ -213,13 +195,9 @@ function updateTimerDisplay() {
 
 // ================= KLAWIATURA I AKCJE =================
 document.addEventListener('keydown', (event) => {
-    if (event.target.tagName.toLowerCase() === 'input') return;
+    if (event.target.tagName.toLowerCase() === 'input' || isDeleteMode) return;
     
-    if (event.key === 'Backspace') {
-        event.preventDefault();
-        isBackspacePressed = true;
-        return;
-    }
+    if (event.key === 'Backspace') { event.preventDefault(); isBackspacePressed = true; return; }
 
     const pressedKey = event.key.toLowerCase();
 
@@ -228,14 +206,12 @@ document.addEventListener('keydown', (event) => {
         activeProfile.players.forEach(p => { if (p.keyBind === pressedKey) p.keyBind = ''; });
         activeProfile.players[listeningForBindIndex].keyBind = pressedKey;
         listeningForBindIndex = null;
-        saveData();
-        renderGrid();
-        return; 
+        saveData(); renderGrid(); return; 
     }
 
     const playerIndex = activeProfile.players.findIndex(p => p.keyBind === pressedKey);
     if (playerIndex !== -1) {
-        if (isBackspacePressed) decrementJump(playerIndex);
+        if (isBackspacePressed) decrementJump(event, playerIndex);
         else incrementJump(playerIndex);
     }
 });
@@ -253,8 +229,7 @@ function addPlayer() {
         const keyBind = activeProfile.players.length < availableKeys.length ? availableKeys[activeProfile.players.length] : '';
         activeProfile.players.push({ name: name, position: pos, keyBind: keyBind, currentJumps: 0, stages: [] });
         input.value = ''; input.focus(); 
-        saveData();
-        renderGrid(); renderTable();
+        saveData(); renderGrid(); renderTable();
     }
 }
 
@@ -264,21 +239,52 @@ function incrementJump(index) {
     if (listeningForBindIndex !== null) return; 
     startTimer();
     activeProfile.players[index].currentJumps++;
-    saveData();
-    renderGrid(); renderTable();
+    saveData(); renderGrid(); renderTable();
 }
 
-function decrementJump(index, event) {
+function decrementJump(event, index) {
     if (event) event.stopPropagation();
     if (activeProfile.players[index].currentJumps > 0) {
         activeProfile.players[index].currentJumps--;
-        saveData();
-        renderGrid(); renderTable();
+        saveData(); renderGrid(); renderTable();
     }
 }
 
-function startListening(index, event) {
-    event.stopPropagation(); 
+// ================= TRYB USUWANIA (NOWOŚĆ) =================
+function toggleDeleteMode() {
+    isDeleteMode = !isDeleteMode;
+    updateDeleteModeUI();
+}
+
+function updateDeleteModeUI() {
+    const btn = document.getElementById('delPlayerBtn');
+    const grid = document.getElementById('grid');
+    if (isDeleteMode) {
+        btn.innerText = dict[currentLang].cancelDelete;
+        btn.classList.add('active-mode');
+        grid.classList.add('delete-mode');
+    } else {
+        btn.innerText = dict[currentLang].deletePlayerBtn;
+        btn.classList.remove('active-mode');
+        grid.classList.remove('delete-mode');
+    }
+}
+
+function executeDeletePlayer(index) {
+    const pName = activeProfile.players[index].name;
+    if (confirm(`${dict[currentLang].confirmDeletePlayer}\n(${pName})`)) {
+        activeProfile.players.splice(index, 1);
+        saveData();
+        toggleDeleteMode(); // Wyłączamy tryb usuwania po udanej akcji
+        renderGrid(); 
+        renderTable();
+    } else {
+        toggleDeleteMode(); // Anulowano, więc wyłączamy tryb
+    }
+}
+
+function startListening(event, index) {
+    if (event) event.stopPropagation(); 
     listeningForBindIndex = listeningForBindIndex === index ? null : index;
     renderGrid();
 }
@@ -287,24 +293,16 @@ function startListening(index, event) {
 function nextStage() {
     if (!activeProfile || activeProfile.players.length === 0) return;
     
-    clearInterval(stageTimerInterval);
-    stageTimerInterval = null;
-    
-    // Dodajemy czas etapu do bazy czasu całkowitenego
+    clearInterval(stageTimerInterval); stageTimerInterval = null;
     activeProfile.totalTimeBase += activeProfile.time;
     activeProfile.time = 0;
     updateTimerDisplay();
 
-    activeProfile.players.forEach(p => {
-        p.stages.push(p.currentJumps);
-        p.currentJumps = 0;
-    });
-
+    activeProfile.players.forEach(p => { p.stages.push(p.currentJumps); p.currentJumps = 0; });
     activeProfile.stageIndex++;
     document.getElementById('stageLabel').innerText = activeProfile.stageIndex + 1;
     document.getElementById('stageBtnLabel').innerText = activeProfile.stageIndex + 1;
-    saveData();
-    renderGrid(); renderTable();
+    saveData(); renderGrid(); renderTable();
 }
 
 function renderLimits() {
@@ -313,10 +311,7 @@ function renderLimits() {
     positionsList.forEach(pos => {
         const div = document.createElement('div');
         div.className = 'limit-item';
-        div.innerHTML = `
-            <label>${pos}</label>
-            <input type="number" value="${activeProfile.limits[pos]}" onchange="updateLimit('${pos}', this.value)">
-        `;
+        div.innerHTML = `<label>${pos}</label><input type="number" value="${activeProfile.limits[pos]}" onchange="updateLimit('${pos}', this.value)">`;
         container.appendChild(div);
     });
 }
@@ -325,11 +320,10 @@ function updateLimit(pos, value) {
     let val = parseInt(value);
     if (isNaN(val) || val < 1) val = 100;
     activeProfile.limits[pos] = val;
-    saveData();
-    renderGrid();
+    saveData(); renderGrid();
 }
 
-// ================= RENDEROWANIE WIDOKÓW =================
+// ================= RENDEROWANIE WIDOKÓW (Z NOWYMI KOLORAMI) =================
 function renderGrid() {
     const grid = document.getElementById('grid');
     grid.innerHTML = ''; 
@@ -337,25 +331,34 @@ function renderGrid() {
     activeProfile.players.forEach((player, index) => {
         const tile = document.createElement('div');
         
+        // Płynna paleta kolorów HSL: od 120 (Zielony) -> 60 (Żółty) -> 0 (Czerwony)
         const limit = activeProfile.limits[player.position] || 100;
         const totalPastStages = player.stages.reduce((sum, val) => sum + val, 0);
         const totalJumps = totalPastStages + player.currentJumps;
-        const pct = totalJumps / limit;
         
-        let statusClass = 'status-green';
-        if (pct >= 1.0) statusClass = 'status-red';
-        else if (pct >= 0.5) statusClass = 'status-yellow';
+        let pct = totalJumps / limit;
+        if (pct > 1) pct = 1; // Zatrzymujemy obliczenia na 100%, by kolor nie poszedł w fiolet/róż
+        
+        // Obliczanie odcienia: 0 skoków to zielony (120), 100% to czerwony (0)
+        const hue = Math.floor(120 * (1 - pct));
+        const tileColor = `hsl(${hue}, 85%, 42%)`; // 42% jasności daje mocny, nasycony i czytelny kolor
 
-        tile.className = `tile ${statusClass}`;
-        tile.onclick = () => incrementJump(index);
+        tile.className = 'tile';
+        // Przekazanie dynamicznego koloru do CSS (zmienia pasek na dole i licznik)
+        tile.style.setProperty('--tile-color', tileColor);
+        
+        tile.onclick = () => {
+            if (isDeleteMode) executeDeletePlayer(index);
+            else incrementJump(index);
+        };
         
         const isListening = listeningForBindIndex === index;
         const keyText = isListening ? '[ ? ]' : (player.keyBind ? `[ ${player.keyBind} ]` : '[ + ]');
         const listeningClass = isListening ? 'listening' : '';
 
         tile.innerHTML = `
-            <div class="undo-btn" onclick="decrementJump(${index}, event)">-</div>
-            <div class="key-hint ${listeningClass}" onclick="startListening(${index}, event)">${keyText}</div>
+            <div class="undo-btn" onclick="decrementJump(event, ${index})">-</div>
+            <div class="key-hint ${listeningClass}" onclick="startListening(event, ${index})">${keyText}</div>
             <div class="name">${player.name}</div>
             <div class="pos-label">${player.position}</div>
             <div class="count">${player.currentJumps}</div>
@@ -412,8 +415,4 @@ function exportToCSV() {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
-// Inicjalizacja przy załadowaniu strony
-window.onload = () => {
-    initData();
-    setLanguage('en'); // Domyślny na angielski
-};
+window.onload = () => { initData(); setLanguage('en'); };

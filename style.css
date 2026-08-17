@@ -6,19 +6,11 @@
     --text-dark: #1a252f;
 }
 
-/* Zabezpieczenie przed rozjeżdżaniem się szerokości */
-*, *::before, *::after {
-    box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
-body {
-    font-family: system-ui, sans-serif;
-    padding: 10px 20px;
-    background-color: var(--bg-color);
-    margin: 0;
-}
+body { font-family: system-ui, sans-serif; padding: 10px 20px; background-color: var(--bg-color); margin: 0; }
 
-/* Pasek górny i Profile */
+/* Menu i paski */
 .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .profile-section { display: flex; gap: 10px; align-items: center; font-weight: bold; color: var(--text-dark); }
 .profile-section select { padding: 5px 10px; border-radius: 5px; border: 1px solid var(--arg-blue); outline: none; }
@@ -26,14 +18,12 @@ body {
 .delete-btn { background: #e74c3c; }
 .delete-btn:hover { background: #c0392b; }
 
-/* Przełącznik języka i Pomoc */
 .lang-switcher { display: flex; gap: 5px; background: var(--arg-white); border-radius: 8px; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .lang-btn { padding: 5px 15px; background: transparent; color: var(--arg-blue); border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
 .lang-btn.active { background: var(--arg-blue); color: var(--arg-white); }
 .help-btn { padding: 5px 15px; background: var(--text-dark); color: white; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px; }
 .help-btn:hover { background: #2c3e50; }
 
-/* Header i Inputs */
 .header { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap; }
 input { padding: 10px 15px; font-size: 16px; border: 2px solid var(--arg-blue); border-radius: 8px; width: 220px; outline: none; }
 input:focus { border-color: var(--arg-sun); }
@@ -43,6 +33,9 @@ button { padding: 10px 20px; font-size: 16px; font-weight: bold; border: none; b
 button:active { transform: scale(0.95); }
 
 .add-btn { background-color: var(--arg-blue); }
+.del-player-btn { background-color: #e74c3c; }
+.del-player-btn:hover { background-color: #c0392b; }
+.del-player-btn.active-mode { background-color: #333; } /* Kolor przycisku podczas trybu usuwania (Anuluj) */
 .stage-btn { background-color: var(--text-dark); }
 .export-btn { background-color: var(--arg-sun); color: var(--text-dark); }
 
@@ -51,13 +44,13 @@ button:active { transform: scale(0.95); }
 .timer-panel span { color: var(--text-dark); font-size: 0.8em; margin-right: 5px; }
 #timeStage, #timeTotal { color: var(--arg-blue); font-size: 1.25em; margin-right: 15px; }
 
-/* Layout główny */
+/* Layout */
 .app-layout { display: flex; gap: 20px; align-items: flex-start; }
 .main-panel { flex: 3; min-width: 600px; }
 .side-panel { flex: 1; min-width: 320px; background-color: var(--arg-white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(67, 161, 213, 0.1); }
 .side-panel h2 { margin-top: 0; color: var(--arg-blue); font-size: 1.5em; text-align: center; }
 
-/* Siatka i Kafelki */
+/* Siatka i kafelki - Dynamiczne kolory (var(--tile-color)) */
 #grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
 
 .tile {
@@ -66,129 +59,72 @@ button:active { transform: scale(0.95); }
     padding: 25px 5px 15px 5px; 
     text-align: center;
     border-radius: 10px;
-    border-bottom: 5px solid var(--arg-blue);
+    border-bottom: 5px solid var(--tile-color, var(--arg-blue));
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     user-select: none;
-    transition: transform 0.05s, border-color 0.3s;
+    transition: transform 0.05s, border-bottom-color 0.3s;
 }
-
 .tile:active { transform: scale(0.95); }
 
-/* Kolory Limitów */
-.tile.status-green { border-bottom: 5px solid #2ecc71; }
-.tile.status-green .count { color: #2ecc71; }
-.tile.status-yellow { border-bottom: 5px solid #f1c40f; }
-.tile.status-yellow .count { color: #f1c40f; }
-.tile.status-red { border-bottom: 5px solid #e74c3c; background-color: #fff5f5; }
-.tile.status-red .count { color: #e74c3c; }
-.tile.status-red .undo-btn { background-color: #c0392b; }
+/* TRYB USUWANIA (Gdy aktywowany przyciskiem) */
+.delete-mode .tile {
+    background-color: #ffeded;
+    border-bottom-color: #c0392b !important;
+    animation: pulseRed 1.5s infinite;
+}
+.delete-mode .tile > * {
+    pointer-events: none; /* Wyłącza klikanie w małe przyciski na kafelku, gdy chcemy go po prostu usunąć */
+}
+@keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-/* Przyciski na kafelku */
+/* Przyciski kafelków */
 .undo-btn { position: absolute; top: 5px; left: 5px; background-color: #e74c3c; color: white; font-weight: bold; font-size: 1.1em; padding: 2px 10px; border-radius: 6px; cursor: pointer; z-index: 10; }
 .undo-btn:hover { background-color: #c0392b; }
-.key-hint { position: absolute; top: 5px; right: 5px; background-color: var(--arg-sun); color: var(--text-dark); font-size: 0.8em; font-weight: bold; padding: 5px 10px; border-radius: 6px; text-transform: uppercase; cursor: pointer; border: 2px solid transparent; }
+
+.key-hint { position: absolute; top: 5px; right: 5px; background-color: var(--arg-sun); color: var(--text-dark); font-size: 0.8em; font-weight: bold; padding: 5px 10px; border-radius: 6px; text-transform: uppercase; cursor: pointer; border: 2px solid transparent; z-index: 10; }
 .key-hint:hover { background-color: #dfa006; }
 .key-hint.listening { background-color: #e74c3c; color: white; animation: pulse 1s infinite; }
-
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
 .name { font-size: 1.05em; font-weight: 600; color: var(--text-dark); word-wrap: break-word; text-transform: uppercase; }
 .pos-label { font-size: 0.75em; color: gray; font-weight: bold; margin-top: 2px; }
-.count { display: block; font-size: 2.5em; font-weight: bold; color: var(--arg-blue); margin-top: 5px; transition: color 0.3s; }
+.count { display: block; font-size: 2.5em; font-weight: bold; color: var(--tile-color, var(--arg-blue)); margin-top: 5px; transition: color 0.3s; }
 
-/* Tabela */
+/* Tabele i reszta */
 .table-container { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9em; }
 th, td { padding: 8px 4px; border-bottom: 1px solid #eee; white-space: nowrap; }
 th { background-color: var(--bg-color); color: var(--text-dark); }
 .total-col { font-weight: bold; color: var(--arg-blue); background-color: #f8fbfd; }
 
-/* Panel Limitów */
 .limits-panel { margin-top: 20px; padding: 15px; background: #f9fbfc; border-radius: 8px; border: 1px solid #e1e8ed; }
 .limits-panel h3 { margin-top: 0; font-size: 1.1em; color: var(--text-dark); text-align: center; }
 .limits-flex { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .limit-item { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.85em; font-weight: bold; color: var(--text-dark); }
 .limit-item input { width: 50px; padding: 5px; font-size: 14px; text-align: center; border-radius: 5px; border: 1px solid #ccc; }
 
-/* MODAL */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
 .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 .close-modal { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 5px 12px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
 .help-text h3 { color: var(--arg-blue); margin-bottom: 5px; margin-top: 20px; }
 .help-text p { margin: 0 0 10px 0; color: #333; line-height: 1.4; }
 
-/* ========================================================= */
-/*       MEDIA QUERIES (RESPONSYWNOŚĆ DLA SMARTFONÓW)        */
-/* ========================================================= */
-
 @media (max-width: 900px) {
-    .app-layout {
-        flex-direction: column; /* Panele układają się jeden pod drugim */
-    }
-    
-    .main-panel, .side-panel {
-        min-width: 100%; 
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    
-    #grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 kafelki w rzędzie na większych telefonach */
-    }
-    
-    .top-bar {
-        flex-direction: column;
-        gap: 15px;
-        align-items: stretch;
-    }
-    
-    .profile-section, .lang-switcher {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .header input, .header select, .header button {
-        width: 100%;
-        margin-bottom: 5px;
-    }
-    
-    /* Na telefonie stoper może zajmować dwie linie dla czytelności */
-    .timer-panel {
-        font-size: 1.2em;
-        line-height: 1.5;
-    }
+    .app-layout { flex-direction: column; }
+    .main-panel, .side-panel { min-width: 100%; width: 100%; margin-bottom: 20px; }
+    #grid { grid-template-columns: repeat(3, 1fr); }
+    .top-bar { flex-direction: column; gap: 15px; align-items: stretch; }
+    .profile-section, .lang-switcher { justify-content: center; flex-wrap: wrap; }
+    .header { flex-direction: column; align-items: stretch; }
+    .header input, .header select, .header button { width: 100%; margin-bottom: 5px; }
 }
 
 @media (max-width: 480px) {
-    body {
-        padding: 5px 10px; /* Mniejsze marginesy krawędziowe dla małych ekranów */
-    }
-    
-    #grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 kafelki w rzędzie na bardzo wąskich ekranach */
-    }
-    
-    .tile {
-        padding: 20px 5px 10px 5px; /* Minimalizujemy puste miejsce na kafelku */
-    }
-    
-    .count {
-        font-size: 2em; /* Lekko mniejsza czcionka licznika by zawsze się mieściła */
-    }
-    
-    .name {
-        font-size: 0.9em;
-    }
-    
-    /* Powiększamy przyciski z - i + dla łatwiejszego trafienia palcem */
-    .undo-btn, .key-hint {
-        padding: 6px 12px;
-        font-size: 1.1em;
-    }
+    body { padding: 5px 10px; }
+    #grid { grid-template-columns: repeat(2, 1fr); }
+    .tile { padding: 20px 5px 10px 5px; }
+    .count { font-size: 2em; }
+    .name { font-size: 0.9em; }
+    .undo-btn, .key-hint { padding: 6px 12px; font-size: 1.1em; }
 }
