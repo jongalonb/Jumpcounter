@@ -4,6 +4,24 @@
     --arg-white: #FFFFFF;
     --bg-color: #f0f2f5;
     --text-dark: #1a252f;
+    --card-bg: #ffffff;
+    --panel-soft: #eef3f7;
+    --muted: #5d6b7a;
+    --modal-backdrop: rgba(0,0,0,0.6);
+    --button-muted: #bdc3c7;
+    --button-light: #f0f2f5;
+}
+
+body.dark-mode {
+    --bg-color: #0f172a;
+    --text-dark: #e5edf8;
+    --arg-white: #172233;
+    --card-bg: #1b2a3a;
+    --panel-soft: #111b2a;
+    --muted: #a6b4c5;
+    --modal-backdrop: rgba(2,6,23,0.74);
+    --button-muted: #31415d;
+    --button-light: #27374a;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -11,10 +29,17 @@
 body { 
     font-family: system-ui, sans-serif; 
     background-color: var(--bg-color); 
+    color: var(--text-dark);
     margin: 0; 
-    padding-top: 70px; /* Miejsce na pływający pasek nawigacji */
-    padding-bottom: 30px;
+    padding-top: calc(70px + env(safe-area-inset-top));
+    padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    overscroll-behavior: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+* { -webkit-tap-highlight-color: transparent; }
+html { background: var(--bg-color); }
+button, input, select { touch-action: manipulation; }
 
 /* GŁÓWNA NAWIGACJA (STICKY) */
 .app-nav { 
@@ -86,36 +111,38 @@ button:active { transform: scale(0.96); }
 
 /* PODSUMOWANIE (Tabela w Details) */
 .summary-section { padding: 20px 15px; max-width: 1200px; margin: 0 auto; }
-details { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+details { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 summary { font-size: 1.2em; font-weight: bold; color: var(--text-dark); cursor: pointer; outline: none; list-style: none; display: flex; justify-content: space-between; }
 summary::-webkit-details-marker { display: none; }
 .table-container { overflow-x: auto; margin-top: 15px; }
 table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9em; }
-th, td { padding: 10px 5px; border-bottom: 1px solid #eee; white-space: nowrap; }
-th { background-color: var(--bg-color); color: var(--text-dark); }
+th, td { padding: 10px 5px; border-bottom: 1px solid rgba(148,163,184,0.2); white-space: nowrap; }
+th { background-color: var(--panel-soft); color: var(--text-dark); }
 .total-col { font-weight: bold; color: var(--arg-blue); background-color: #f8fbfd; }
 
 /* ========================================== */
 /* OKNA WYSKAKUJĄCE (MODALS)                  */
 /* ========================================== */
 .modal {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+    display: none; position: fixed; inset: 0; background: var(--modal-backdrop); 
     z-index: 200; justify-content: center; align-items: center; padding: 15px;
 }
 .modal.active { display: flex; animation: fadeIn 0.2s; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .modal-content {
-    background: white; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px;
+    background: var(--card-bg); padding: 25px; border-radius: 16px; width: 100%; max-width: 400px;
     position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
 }
 .modal-content h2 { margin-top: 0; color: var(--text-dark); text-align: center; font-size: 1.5em; margin-bottom: 20px; }
 .close-btn { position: absolute; top: 15px; right: 15px; background: #eee; border: none; font-size: 16px; font-weight: bold; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
 /* Formularze w Modalach */
-input, select { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; outline: none; margin-bottom: 15px; }
+input, select { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; outline: none; margin-bottom: 15px; background: var(--card-bg); color: var(--text-dark); }
 input:focus, select:focus { border-color: var(--arg-blue); }
 .modal-actions { display: flex; gap: 10px; margin-top: 10px; }
+.export-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.export-actions button { width: 100%; padding: 14px 12px; }
 
 /* Elementy Menu */
 .menu-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -137,3 +164,90 @@ input:focus, select:focus { border-color: var(--arg-blue); }
 
 .help-text h3 { color: var(--arg-blue); margin-bottom: 5px; margin-top: 20px; font-size: 1.1em; }
 .help-text p { margin: 0 0 10px 0; color: #444; line-height: 1.4; font-size: 0.95em; }
+
+@media (max-width: 480px) {
+    .export-actions {
+        grid-template-columns: 1fr;
+    }
+    .app-nav {
+        height: 64px;
+        padding: 0 10px;
+        gap: 8px;
+    }
+
+    .icon-btn {
+        font-size: 0.8rem;
+        padding: 8px 8px;
+        min-width: 0;
+    }
+
+    .timer-display {
+        min-width: 0;
+        flex: 1;
+    }
+
+    #timeStage {
+        font-size: 1.15rem;
+    }
+
+    #timeTotal {
+        font-size: 0.7rem;
+    }
+
+    .action-bar {
+        flex-direction: column;
+        padding: 12px 10px;
+        gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-danger {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    #grid {
+        gap: 10px;
+        padding: 0 10px;
+    }
+
+    .tile {
+        padding: 18px 4px 12px;
+    }
+
+    .name {
+        font-size: 0.88rem;
+    }
+
+    .count {
+        font-size: clamp(2rem, 9vw, 2.8rem);
+    }
+
+    .modal-content {
+        padding: 18px 16px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 360px) {
+    .icon-btn span {
+        display: none;
+    }
+
+    #grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 768px) {
+    .action-bar {
+        padding: 18px 20px;
+    }
+
+    #grid {
+        gap: 16px;
+    }
+}

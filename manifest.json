@@ -1,0 +1,17 @@
+{
+  "name": "Jump Counter Pro",
+  "short_name": "Jump Counter",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#43A1D5",
+  "description": "Volleyball jump counter for training sessions",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

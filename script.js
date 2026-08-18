@@ -11,6 +11,7 @@ const dict = {
         confirmDeleteProfile: "Are you sure you want to delete this profile?",
         cantDeleteLast: "You cannot delete the last profile. Create a new one first.",
         pos_S: "Setter (S)", pos_OH: "Outside Hitter (OH)", pos_MB: "Middle Blocker (MB)", pos_OPP: "Opposite (OPP)", pos_L: "Libero (L)",
+        helpTitle: 'Instructions',
         helpHTML: `
             <h3>1. Menus & Settings</h3>
             <p>Click <b>☰ Menu</b> to change profiles, export to Excel, set jump limits, or start a new training session.</p>
@@ -37,6 +38,7 @@ const dict = {
         confirmDeleteProfile: "¿Estás seguro de que quieres eliminar este perfil?",
         cantDeleteLast: "No puedes eliminar el último perfil. Crea uno nuevo primero.",
         pos_S: "Armador (S)", pos_OH: "Punta (OH)", pos_MB: "Central (MB)", pos_OPP: "Opuesto (OPP)", pos_L: "Líbero (L)",
+        helpTitle: 'Instrucciones',
         helpHTML: `
             <h3>1. Menú y Ajustes</h3>
             <p>Haz clic en <b>☰ Menú</b> para cambiar perfiles, exportar, ajustar límites o iniciar un nuevo entrenamiento.</p>
@@ -56,7 +58,8 @@ const dict = {
 const positionsList = ['S', 'OH', 'MB', 'OPP', 'L'];
 const availableKeys = ['1','2','3','4','5','6','q','w','e','r','t','y','a','s','d','f','g','h','z','x','c','v','b','n'];
 
-let currentLang = 'en';
+let currentLang = localStorage.getItem('volleyJumpsLang') || 'en';
+let isDarkMode = localStorage.getItem('volleyJumpsDarkMode') === 'true';
 let appData = { profiles: {}, activeProfileId: null };
 let activeProfile = null;
 
@@ -184,6 +187,7 @@ function loadActiveProfile() {
 // ================= JĘZYK =================
 function setLanguage(lang) {
     currentLang = lang;
+    localStorage.setItem('volleyJumpsLang', lang);
     const t = dict[lang];
     document.getElementById('playerName').placeholder = t.placeholder;
     document.getElementById('confirmAddBtn').innerText = t.add;
@@ -206,8 +210,27 @@ function setLanguage(lang) {
     
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+    applyTheme();
     
     renderPositionSelect(); renderLimits(); renderTable(); 
+}
+
+function applyTheme() {
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.documentElement.style.colorScheme = isDarkMode ? 'dark' : 'light';
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', isDarkMode ? '#0f172a' : '#43A1D5');
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+        themeBtn.innerText = isDarkMode ? '☀️' : '🌙';
+        themeBtn.title = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+}
+
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    localStorage.setItem('volleyJumpsDarkMode', String(isDarkMode));
+    applyTheme();
 }
 
 function renderPositionSelect() {
@@ -227,6 +250,7 @@ function startTimer() {
     stageTimerInterval = setInterval(() => {
         activeProfile.time = Math.floor((Date.now() - stageStartTime) / 1000);
         updateTimerDisplay();
+        saveData();
     }, 1000);
 }
 
@@ -376,6 +400,7 @@ function updateLimit(pos, value) {
 // ================= WIDOKI (Grid & Table) =================
 function renderGrid() {
     const grid = document.getElementById('grid');
+    if (!activeProfile || !activeProfile.players) return;
     grid.innerHTML = ''; 
     
     activeProfile.players.forEach((player, index) => {
@@ -418,7 +443,7 @@ function renderGrid() {
 
 function renderTable() {
     const table = document.getElementById('summaryTable');
-    if (!activeProfile || activeProfile.players.length === 0) { table.innerHTML = ''; return; }
+    if (!activeProfile || !activeProfile.players || activeProfile.players.length === 0) { table.innerHTML = ''; return; }
 
     const t = dict[currentLang];
     let html = `<thead><tr><th>${t.tableName}</th>`;
@@ -438,32 +463,102 @@ function renderTable() {
 }
 
 // ================= EKSPORT (EXCEL BULLETPROOF) =================
-function exportToCSV() {
-    if (!activeProfile || activeProfile.players.length === 0) { alert(dict[currentLang].alertNoData); return; }
-
-    const t = dict[currentLang];
-    let csvContent = `data:text/csv;charset=utf-8,\uFEFFsep=;\n${t.tableName};Position;`;
-    
-    for (let i = 0; i < activeProfile.stageIndex; i++) csvContent += `${t.stageWord} ${i + 1};`;
-    csvContent += `${t.stageWord} ${activeProfile.stageIndex + 1} (${t.tableCurrent});${t.tableTotal}\n`;
-    
-    activeProfile.players.forEach(p => {
-        const totalPastStages = p.stages.reduce((sum, val) => sum + val, 0);
-        const grandTotal = totalPastStages + p.currentJumps;
-        
-        csvContent += `${p.name};${p.position};`;
-        p.stages.forEach(s => { csvContent += `${s};`; });
-        csvContent += `${p.currentJumps};${grandTotal}\n`;
-    });
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    const fileName = currentLang === 'es' ? `saltos_entrenamiento_${activeProfile.stageIndex + 1}.csv` : `jumps_training_${activeProfile.stageIndex + 1}.csv`;
-    link.setAttribute("download", fileName);
-    
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    closeModals(); // Zamknięcie menu po pobraniu
+function buildExportPayload() {
+    return {
+        exportedAt: new Date().toISOString(),
+        profileName: activeProfile.name,
+        stageIndex: activeProfile.stageIndex,
+        totalTime: activeProfile.totalTimeBase + activeProfile.time,
+        players: activeProfile.players.map(p => {
+            const totalPastStages = p.stages.reduce((sum, val) => sum + val, 0);
+            const total = totalPastStages + p.currentJumps;
+            return {
+                name: p.name,
+                position: p.position,
+                keyBind: p.keyBind || null,
+                stages: p.stages,
+                currentJumps: p.currentJumps,
+                total
+            };
+        })
+    };
 }
 
-window.onload = () => { initData(); setLanguage('en'); };
+function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function exportCurrentData(format) {
+    if (!activeProfile || !activeProfile.players || activeProfile.players.length === 0) { alert(dict[currentLang].alertNoData); return; }
+
+    const payload = buildExportPayload();
+    const stageNumber = activeProfile.stageIndex + 1;
+
+    if (format === 'csv') {
+        let csv = 'name;position;';
+        for (let i = 0; i < activeProfile.stageIndex; i++) csv += `stage ${i + 1};`;
+        csv += 'current;total\n';
+        activeProfile.players.forEach(p => {
+            const totalPastStages = p.stages.reduce((sum, val) => sum + val, 0);
+            const total = totalPastStages + p.currentJumps;
+            csv += `${p.name};${p.position};`;
+            p.stages.forEach(s => csv += `${s};`);
+            csv += `${p.currentJumps};${total}\n`;
+        });
+        downloadTextFile(`jumps_${stageNumber}.csv`, csv, 'text/csv;charset=utf-8;');
+    }
+
+    if (format === 'json') {
+        const json = JSON.stringify(payload, null, 2);
+        downloadTextFile(`jumps_${stageNumber}.json`, json, 'application/json;charset=utf-8;');
+    }
+
+    if (format === 'txt') {
+        let text = `Jump Counter Pro\nProfile: ${payload.profileName}\nExported: ${payload.exportedAt}\n\n`;
+        payload.players.forEach(player => {
+            text += `${player.name} (${player.position})\n`;
+            if (player.stages.length) {
+                text += `  stages: ${player.stages.join(' | ')}\n`;
+            }
+            text += `  current: ${player.currentJumps}\n  total: ${player.total}\n\n`;
+        });
+        downloadTextFile(`jumps_${stageNumber}.txt`, text, 'text/plain;charset=utf-8;');
+    }
+
+    closeModals();
+}
+
+function exportToCSV() {
+    exportCurrentData('csv');
+}
+
+async function copyExportData() {
+    if (!activeProfile || !activeProfile.players || activeProfile.players.length === 0) { alert(dict[currentLang].alertNoData); return; }
+    const content = JSON.stringify(buildExportPayload(), null, 2);
+    try {
+        if (navigator.clipboard) {
+            await navigator.clipboard.writeText(content);
+        } else {
+            prompt('Copy the export data below:', content);
+        }
+        closeModals();
+    } catch (error) {
+        prompt('Copy the export data below:', content);
+    }
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+}
+
+window.addEventListener('load', () => { initData(); setLanguage(currentLang || 'en'); applyTheme(); });
